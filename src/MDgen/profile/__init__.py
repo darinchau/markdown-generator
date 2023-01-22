@@ -1,1 +1,1 @@
-from images import dev
+from MDgen.profile.images import dev

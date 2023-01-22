@@ -1,2 +1,2 @@
-from base import ReadMe, Tagged, Point, Image, Hyperlink
-from util import copy
+from MDgen.base import ReadMe, Tagged, Point, Image, Hyperlink
+from MDgen.util import copy

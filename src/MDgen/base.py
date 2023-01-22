@@ -11,17 +11,20 @@ import numpy as np
 from typing import Any, Generator, Optional
 from abc import ABC, abstractmethod as virtual
 
-from util import rm
+from MDgen.util import rm
 
 class ReadMe:
     """This wrapper class generates the read me file"""    
     def __init__(self, content = ""):
         self._content = content
     
-    def add(self, *contents: ReadMe):
+    def add(self, *contents: ReadMe, newline: bool = False):
+        """Add contents to read me. If the newline variable is set to true, then add a newline character between every readme content"""
         for c in contents:
             if isinstance(c, ReadMe):
                 self._content += c.content
+            if newline:
+                self._content += "\n"
         return self
     
     @property

@@ -38,7 +38,7 @@ class ReadMe:
     def export(self, path: str):
         # Delete the existing read me file
         rm(path)
-        with open(path) as f:
+        with open(path, 'w', encoding='utf-8') as f:
             f.write(self.content)
             
     def __copy__(self) -> ReadMe:
@@ -52,7 +52,7 @@ class Tagged(ReadMe):
         
     @property
     def content(self):
-        return f'<{self.tag} {self.info}>{self.content}</{self.tag}>'
+        return f'<{self.tag} {self.info}>{self._content}</{self.tag}>'
     
     def __copy__(self):
         return Tagged(self.content, self.tag, self.info)
@@ -69,7 +69,7 @@ class Hyperlink(ReadMe):
     
     @property
     def content(self):
-        return f"[{self.text}]({self.content})"
+        return f"[{self.text}]({self.url})"
     
     def __copy__(self):
         return Hyperlink(self.text, self.url)

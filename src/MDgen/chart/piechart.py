@@ -118,7 +118,7 @@ class PieChart(ReadMe):
                 ratio = v.amount / sum_total
                 mock_text = f"    {v.color.name}: {round(ratio * 100, 2)}%"
                 currRow += f'<span style="background-color: {v.color.color};">&nbsp; &nbsp;</span> {v.color.name}: {round(ratio * 100, 2)}%'
-                currRow += "&nbsp;" * (padding - len(mock_text) + 5)
+                currRow += "&nbsp; " * ((padding - len(mock_text) + 5) // 2 + 1)
                 if i % entries_per_row == entries_per_row - 1 or i == len(self.entries) - 1:
                     legends.append(f'<p>{currRow}</p>')
                     currRow = ""

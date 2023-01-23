@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod as virtual
 from math import sin, cos
+import random
 
 from MDgen.base import ReadMe
 from MDgen.chart.chartinfo import ChartInfo
@@ -7,12 +8,12 @@ from MDgen.chart.colorinfo import ColorInfo
 
 PI = 3.1415926
 
-def get_angles(a: float) -> tuple[float, float]:
-    return 50 + 50 * sin(a), 50 - 50 * cos(a)
+def get_angles(a: float, size: float) -> tuple[float, float]:
+    return size + size * sin(a), size - size * cos(a)
 
 class PieChart(ReadMe):
     def __init__(self, size: int, entries: list[ChartInfo]):
-        self.chart_size = size
+        self.size = size
         self.entries = entries
     
     @property
@@ -26,50 +27,90 @@ class PieChart(ReadMe):
         # Second loop to draw the chart and take note of the legend
         legends = []
         paths = []
+        
         last_angle = 0.
-        mid = self.chart_size // 2
-        for v in self.entries:
-            angle = 2 * PI * v.amount / sum_total
-            new_x, new_y = get_angles(last_angle + angle)
-            last_x, last_y = get_angles(last_angle)
-            paths.append(
-                f'\t\t<path d="M{mid},{mid} L{last_x},{last_y} A{mid},{mid},0,0,1,{new_x},{new_y} Z" fill="{v.color.color}"></path>\n'
-            )
+        mid = self.size / 2
+        
+        # Keep track of the longest length to calculate the legend width
+        longest_word_len = 0
+        
+        self.entries.sort(key = lambda x: x.amount, reverse = True)
+        
+        for i, v in enumerate(self.entries):
+            ratio = v.amount / sum_total
+            angle = 2 * PI * ratio
+            
+            # Calculate the new angles
+            if i == len(self.entries) - 1:
+                new_x, new_y = get_angles(0, mid)
+            else:
+                new_x, new_y = get_angles(last_angle + angle, mid)
+            
+            last_x, last_y = get_angles(last_angle, mid)
+            
+            # There is a bug where if the ratio is larger than 0.5 in the pie chart
+            # Then the path might be something unexpected.
+            # To fix this we perform linear interpolation, to cover the distances:
+            # 0 - 40%, 30 - 70%, 60 - 100%
+            if ratio >= 0.49:
+                f30_x, f30_y = get_angles(last_angle + 0.3 * angle, mid)
+                f40_x, f40_y = get_angles(last_angle + 0.4 * angle, mid)
+                f60_x, f60_y = get_angles(last_angle + 0.6 * angle, mid)
+                f70_x, f70_y = get_angles(last_angle + 0.7 * angle, mid)
+                paths += [
+                    f'<path d="M{mid},{mid} L{last_x},{last_y} A{mid},{mid},0,0,1,{f40_x},{f40_y} Z" fill="{v.color.color}"></path>',
+                    f'<path d="M{mid},{mid} L{f30_x},{f30_y} A{mid},{mid},0,0,1,{f70_x},{f70_y} Z" fill="{v.color.color}"></path>',
+                    f'<path d="M{mid},{mid} L{f60_x},{f60_y} A{mid},{mid},0,0,1,{new_x},{new_y} Z" fill="{v.color.color}"></path>'
+                ]
+            else:
+                paths.append(
+                    f'<path d="M{mid},{mid} L{last_x},{last_y} A{mid},{mid},0,0,1,{new_x},{new_y} Z" fill="{v.color.color}"></path>'
+                )
 
             legends.append(
-                f'<p><span style="background-color: {v.color.color};">&nbsp; &nbsp;</span> {v.color.name}</p>'
+                f'<p><span style="background-color: {v.color.color};">&nbsp; &nbsp;</span> {v.color.name}: {round(ratio * 100, 2)}%</p>'
             )
+            
+            # To minimize black borders for adjacent similar colors
+            last_angle += angle - 0.005
+            
+            longest_word_len = max(longest_word_len, len(v.color.name))
         
         # Use an HTML table to display the pie chart along with the legend
-        chart = f'<div id="shape">\n\t<svg height="{self.chart_size}" width="{self.chart_size}">'
-        for p in paths:
-            chart += p
+        chart = f'<div id="shape">\n\t<svg height="{self.size}" width="{self.size}">\n'
+        chart += "\n".join([f"\t\t{p}" for p in paths])
         chart += '\n\t</svg>\n</div>'
         
         # Make the legends
-        legend = ""
-        for l in legends:
-            legend += f"\t{l}\n"
+        legend = "\n".join([f"\t{l}" for l in legends])
         
         # Finish the table
         height = 18
-        chart_width = 30
-        legend_width = 50
+        chart_width = 100
+        legend_width = 20 * longest_word_len + 100
         
         table = f"""\
-
 <table style="height: {height}px; width: {chart_width + legend_width}px; border-collapse: collapse; border-style: hidden;" border="1">
 <tbody>
 <tr style="height: {height}px;">
     <td style="width: {chart_width}px; height: {height}px;">
 {chart}
     </td>
-    
     <td style="width: {legend_width}px; height: {height}px;">
 {legend}
     </td>
 </tr>
 </tbody>
 </table>"""
-
         return table
+
+# Debug
+if __name__ == "__main__":
+    entries = [
+        ChartInfo(random.random(), ColorInfo.random(f"Entry {i}", lower_bound=70)) for i in range(random.randint(2, 5))
+    ]
+    
+    pc = PieChart(200, entries)
+    
+    with open('./test.md', 'w') as f:
+        f.write(pc.content)

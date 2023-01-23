@@ -1,4 +1,4 @@
-from MDgen import Image
+from MDgen.base import Image
 
 class dev:
     angular = Image("https://angular.io", "https://angular.io/assets/images/logos/angular/angular.svg", "Angular")

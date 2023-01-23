@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from typing import Any, Generator, Optional
 from abc import ABC, abstractmethod as virtual
+from datetime import datetime
 
 from MDgen.util import rm
 
@@ -86,3 +87,19 @@ class Image(ReadMe):
 
     def __copy__(self):
         return Image(self.linkurl, self.imageurl, self.alttext)
+
+class CurrentDate(ReadMe):
+    def __init__(self):
+        self.now = datetime.now()
+        
+    @property
+    def content(self) -> str:
+        return self.now.strftime("%d/%m/%Y")
+
+class CurrentTime(ReadMe):
+    def __init__(self):
+        self.now = datetime.now()
+        
+    @property
+    def content(self) -> str:
+        return self.now.strftime("%H:%M:%S")

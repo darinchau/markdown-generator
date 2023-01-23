@@ -74,7 +74,7 @@ class PieChart(ReadMe):
             longest_word_len = max(longest_word_len, len(v.color.name))
         
         # Use an HTML table to display the pie chart along with the legend
-        chart = f'<div id="shape">\n\t<svg height="{self.size}" width="{self.size}">\n'
+        chart = f'<div style="width:800px; margin:0 auto;", id="shape">\n\t<svg height="{self.size}" width="{self.size}">\n'
         chart += "\n".join([f"\t\t{p}" for p in paths])
         chart += '\n\t</svg>\n</div>'
         
@@ -118,7 +118,7 @@ class PieChart(ReadMe):
                 ratio = v.amount / sum_total
                 mock_text = f"    {v.color.name}: {round(ratio * 100, 2)}%"
                 currRow += f'<span style="background-color: {v.color.color};">&nbsp; &nbsp;</span> {v.color.name}: {round(ratio * 100, 2)}%'
-                currRow += "&nbsp; " * ((padding - len(v.color.name) - len(mock_text)) // 2 + 6)
+                currRow += "&nbsp;" * (padding - len(mock_text) + 5)
                 if i % entries_per_row == entries_per_row - 1 or i == len(self.entries) - 1:
                     legends.append(f'<p>{currRow}</p>')
                     currRow = ""

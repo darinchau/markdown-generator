@@ -12,9 +12,11 @@ def get_angles(a: float, size: float) -> tuple[float, float]:
     return size + size * sin(a), size - size * cos(a)
 
 class PieChart(ReadMe):
-    def __init__(self, size: int, entries: list[ChartInfo]):
+    def __init__(self, size: int, entries: list[ChartInfo], use_columns: bool = True):
+        """Generates a pie chart in the markdown file. If use_columns is set to true, then legends are put in columns"""
         self.size = size
         self.entries = entries
+        self.col = use_columns
     
     @property
     def content(self):
@@ -24,8 +26,7 @@ class PieChart(ReadMe):
         for v in self.entries:
             sum_total += v.amount
         
-        # Second loop to draw the chart and take note of the legend
-        legends = []
+        # Second loop to draw the chart
         paths = []
         
         last_angle = 0.
@@ -66,10 +67,6 @@ class PieChart(ReadMe):
                 paths.append(
                     f'<path d="M{mid},{mid} L{last_x},{last_y} A{mid},{mid},0,0,1,{new_x},{new_y} Z" fill="{v.color.color}"></path>'
                 )
-
-            legends.append(
-                f'<p><span style="background-color: {v.color.color};">&nbsp; &nbsp;</span> {v.color.name}: {round(ratio * 100, 2)}%</p>'
-            )
             
             # To minimize black borders for adjacent similar colors
             last_angle += angle - 0.005
@@ -81,15 +78,24 @@ class PieChart(ReadMe):
         chart += "\n".join([f"\t\t{p}" for p in paths])
         chart += '\n\t</svg>\n</div>'
         
-        # Make the legends
-        legend = "\n".join([f"\t{l}" for l in legends])
-        
-        # Finish the table
-        height = 18
-        chart_width = 100
-        legend_width = 20 * longest_word_len + 100
-        
-        table = f"""\
+        if self.col:
+            legends = []
+            # A third loop to create the legends
+            for v in self.entries:
+                ratio = v.amount / sum_total
+                legends.append(
+                    f'<p><span style="background-color: {v.color.color};">&nbsp; &nbsp;</span> {v.color.name}: {round(ratio * 100, 2)}%</p>'
+                )
+            
+            # Make the legends
+            legend = "\n".join([f"\t{l}" for l in legends])
+            
+            # Finish the table
+            height = 18
+            chart_width = 100
+            legend_width = 20 * longest_word_len + 100
+            
+            table = f"""\
 <table style="height: {height}px; width: {chart_width + legend_width}px; border-collapse: collapse; border-style: hidden;" border="1">
 <tbody>
 <tr style="height: {height}px;">
@@ -102,4 +108,33 @@ class PieChart(ReadMe):
 </tr>
 </tbody>
 </table>"""
-        return table
+            return table
+        else:
+            entries_per_row = 3
+            legends = []
+            currRow = ""
+            padding = longest_word_len + 10
+            for i, v in enumerate(self.entries):
+                ratio = v.amount / sum_total
+                mock_text = f"    {v.color.name}: {round(ratio * 100, 2)}%"
+                currRow += f'<span style="background-color: {v.color.color};">&nbsp; &nbsp;</span> {v.color.name}: {round(ratio * 100, 2)}%'
+                currRow += "&nbsp; " * ((padding - len(v.color.name) - len(mock_text)) // 2 + 6)
+                if i % entries_per_row == entries_per_row - 1 or i == len(self.entries) - 1:
+                    legends.append(f'<p>{currRow}</p>')
+                    currRow = ""
+            legend = "\n".join(legends)
+            table = f"""\
+{chart}
+{legend}"""
+            return table
+        
+# Debug
+if __name__ == "__main__":
+    entries = [
+        ChartInfo(random.random(), ColorInfo.random(f"Entry {i}", lower_bound=70)) for i in range(random.randint(2, 10))
+    ]
+
+    pc = PieChart(200, entries, use_columns=False)
+
+    with open('./test.md', 'w') as f:
+        f.write(pc.content)

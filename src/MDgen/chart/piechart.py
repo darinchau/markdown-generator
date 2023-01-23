@@ -103,14 +103,3 @@ class PieChart(ReadMe):
 </tbody>
 </table>"""
         return table
-
-# Debug
-if __name__ == "__main__":
-    entries = [
-        ChartInfo(random.random(), ColorInfo.random(f"Entry {i}", lower_bound=70)) for i in range(random.randint(2, 5))
-    ]
-    
-    pc = PieChart(200, entries)
-    
-    with open('./test.md', 'w') as f:
-        f.write(pc.content)

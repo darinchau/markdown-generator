@@ -9,11 +9,17 @@ class ColorInfo:
         self.name = name
     
     @classmethod
-    def random(self, name: str, *, lower_bound: int = 0, upper_bound: int = 255) -> ColorInfo:
+    def random(cls, name: str, *, lower_bound: int = 0, upper_bound: int = 255) -> ColorInfo:
         """Generate a random color for testing purposes
         lower bound and upper bound are bounds for the color values to prevent generating colors that are too bright or too dim"""
         r = str(hex(random.randint(lower_bound, upper_bound)))[2:]
         g = str(hex(random.randint(lower_bound, upper_bound)))[2:]
         b = str(hex(random.randint(lower_bound, upper_bound)))[2:]
         color = f"#{r}{g}{b}"
-        return ColorInfo(color, name)
+        return cls(color, name)
+    
+    def isDark(self, threshold: float = 0.65):
+        r = int(self.color[1:3], base = 16)
+        g = int(self.color[3:5], base = 16)
+        b = int(self.color[5:7], base = 16)
+        return 0.299 * r + 0.587 * g + 0.114 * b <= threshold * 255

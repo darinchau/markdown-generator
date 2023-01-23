@@ -1,1 +1,1 @@
-from MDgen.profile.images import dev
+from MDgen.profile.git_tools_image import dev

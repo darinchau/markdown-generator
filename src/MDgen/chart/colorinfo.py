@@ -23,3 +23,6 @@ class ColorInfo:
         g = int(self.color[3:5], base = 16)
         b = int(self.color[5:7], base = 16)
         return 0.299 * r + 0.587 * g + 0.114 * b <= threshold * 255
+    
+    def __copy__(self):
+        return ColorInfo(self.color, self.name)

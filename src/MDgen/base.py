@@ -90,16 +90,16 @@ class Image(ReadMe):
 
 class CurrentDate(ReadMe):
     def __init__(self):
-        self.now = datetime.now()
+        pass
         
     @property
     def content(self) -> str:
-        return self.now.strftime("%d/%m/%Y")
+        return datetime.now().strftime("%d/%m/%Y")
 
 class CurrentTime(ReadMe):
     def __init__(self):
-        self.now = datetime.now()
+        pass
         
     @property
     def content(self) -> str:
-        return self.now.strftime("%H:%M:%S")
+        return datetime.now().strftime("%H:%M:%S")

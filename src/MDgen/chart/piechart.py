@@ -1,19 +1,49 @@
 from abc import ABC, abstractmethod as virtual
 from math import sin, cos
 import random
+from typing import Callable
 
 from MDgen.base import ReadMe
 from MDgen.chart.chartinfo import ChartInfo
 from MDgen.chart.colorinfo import ColorInfo
+from MDgen.util import copy
 
 PI = 3.1415926
 
 class PieChart(ReadMe):
-    def __init__(self, chart_size: int, entries: list[ChartInfo], use_columns: bool = True):
-        """Generates a pie chart in the markdown file. If use_columns is set to true, then legends are put in columns"""
+    def __init__(self, chart_size: int, entries: list[ChartInfo], use_columns: bool = True, ignore_key: Callable[[ChartInfo, float], bool] | None = None): # type: ignore
+        """Generates a pie chart in the markdown file. If use_columns is set to true, then legends are put in columns
+        chart_size = Size of the chart on the html
+        entries: List of Chart info entries to generate the chart
+        use_columns: if set to true, then the legends are put on the side. Otherwise the legends are put at the bottom
+        ignore_key: A callable function that ignore some entries and sweep them into the "Others" category. The lambda takes in
+            the chart info c and the overall percentage f, returns a boolean on whether to make the entry represent in others. Default (None)
+            is to not ignore any entries."""
         self.size = chart_size
-        self.entries = entries
         self.col = use_columns
+        
+        if ignore_key is None:
+            ignore_key: Callable[[ChartInfo, float], bool] = lambda c, f: False
+        
+        self.sum_total = sum(v.amount for v in entries)
+            
+        self.entries = self.make_entries(entries, ignore_key)
+        
+
+    def make_entries(self, entries: list[ChartInfo], ignore_key: Callable[[ChartInfo, float], bool]):
+        # We basically need to call ignore key here otherwise stuff down there will mess up
+        ent: list[ChartInfo] = []
+        other_sum = 0.
+        for i, v in enumerate(entries):
+            ratio = v.amount / self.sum_total
+            if ignore_key(v, ratio):
+                other_sum += v.amount
+            else:
+                ent.append(copy(v))
+        
+        ent.sort(key = lambda x: x.amount, reverse = True)
+        ent.append(ChartInfo(other_sum, ColorInfo("#DEDEDE", "Others")))
+        return ent
     
     def get_angles(self, a: float, mid_x: float, mid_y: float) -> tuple[float, float]:
         return mid_x + self.size//2 * sin(a), mid_y - self.size//2 * cos(a)
@@ -26,8 +56,6 @@ class PieChart(ReadMe):
         
         # Keep track of the longest length to calculate the legend width
         longest_word_len = 0
-        
-        self.entries.sort(key = lambda x: -2147483648 if x.color.name == "Others" else x.amount, reverse = True)
         
         for i, v in enumerate(self.entries):
             ratio = v.amount / self.sum_total
@@ -101,13 +129,9 @@ class PieChart(ReadMe):
         return legends
     
     @property
-    def sum_total(self) -> float:
-        if not hasattr(self, "_sum_total"):
-            self._sum_total = sum(v.amount for v in self.entries)
-        return self._sum_total
-    
-    @property
     def content(self):
+        """Content may not work on some SVG (for example GitHub ones). A compromise is to export the graph
+        as an svg and then include the image in your Read Me. Use PieChart.exportAsSVG(filepath) for that."""
         paths, longest_word_length = self.getPaths(self.size // 2, self.size // 2)
         chart = self.getChart(paths)
         
